@@ -3,6 +3,7 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// CẤU HÌNH
 const ADMIN_PASSWORD = 'fpt2026';
 let bookings = []; 
 
@@ -16,15 +17,21 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
 
-// API Khách hàng
+// API cho người dùng
 app.get('/api/prices', (req, res) => res.json(priceMatrix));
 
 app.post('/api/bookings', (req, res) => {
-    bookings.unshift({ ...req.body, id: Date.now(), date: new Date().toLocaleString() });
+    const newBooking = { 
+        ...req.body, 
+        id: Date.now(), 
+        date: new Date().toLocaleString('vi-VN') 
+    };
+    bookings.unshift(newBooking);
+    console.log("Đơn hàng mới đã được lưu:", newBooking);
     res.json({ success: true });
 });
 
-// API Admin
+// API cho Admin
 app.post('/api/admin/verify', (req, res) => {
     if (req.body.password === ADMIN_PASSWORD) res.json({ success: true });
     else res.status(401).json({ success: false });
@@ -33,7 +40,7 @@ app.post('/api/admin/verify', (req, res) => {
 app.post('/api/update-price', (req, res) => {
     const { route, carType, newPrice } = req.body;
     const cleanPrice = parseInt(newPrice.replace(/[^0-9]/g, ''));
-    if (priceMatrix[route] && priceMatrix[route][carType] !== undefined) {
+    if (priceMatrix[route]) {
         priceMatrix[route][carType] = cleanPrice;
         res.json({ success: true });
     } else res.status(400).json({ success: false });
@@ -43,11 +50,11 @@ app.get('/api/admin/statistics', (req, res) => {
     res.json({
         success: true,
         totalBookings: bookings.length,
-        totalRevenue: bookings.reduce((sum, b) => sum + (b.price || 0), 0),
+        totalRevenue: bookings.reduce((sum, b) => sum + (parseInt(b.price) || 0), 0),
         history: bookings
     });
 });
 
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
-app.listen(PORT, () => console.log(`Server chạy tại cổng ${PORT}`));
+app.listen(PORT, () => console.log(`Server đang chạy tại cổng ${PORT}`));
