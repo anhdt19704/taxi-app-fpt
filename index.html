@@ -82,7 +82,7 @@
                     <input type="time" id="time" class="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 px-4 text-xs outline-none">
                 </div>
 
-                <button type="submit" class="w-full bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-200 uppercase tracking-widest flex items-center justify-center space-x-2 active:scale-95 transition-transform">
+                <button type="submit" class="w-full bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-200 uppercase tracking-widest flex items-center justify-center space-x-2 active:scale-95 transition-transform cursor-pointer">
                     <i class="fa-solid fa-paper-plane"></i>
                     <span>ĐẶT XE QUA ZALO</span>
                 </button>
@@ -115,8 +115,7 @@
                             <th class="py-3 px-2">Ghi chú</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100" id="tablePriceBody">
-                        </tbody>
+                    <tbody class="divide-y divide-gray-100" id="tablePriceBody"></tbody>
                 </table>
             </div>
         </div>
@@ -186,18 +185,45 @@
             window.scrollTo(0,0);
         }
 
+        // ĐỒNG BỘ: Gửi đơn âm thầm về Server lưu trữ, sau đó mở ứng dụng Zalo
         document.getElementById('bookingForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const phone = document.getElementById('phone').value;
             const pickup = document.getElementById('pickup').value;
             const routeText = document.getElementById('route').options[document.getElementById('route').selectedIndex].text;
             const carText = document.getElementById('carType').options[document.getElementById('carType').selectedIndex].text;
-            const price = document.getElementById('displayPrice').innerText;
+            const priceRaw = document.getElementById('displayPrice').innerText;
             const date = document.getElementById('date').value;
             const time = document.getElementById('time').value;
 
-            const text = `🚕 ĐƠN ĐẶT XE MỚI 🚕\n------------------\n📍 Tuyến: ${routeText}\n🚘 Xe: ${carText}\n🏠 Điểm đón: ${pickup}\n📅 Ngày: ${date} lúc ${time}\n📞 SĐT: ${phone}\n💰 Giá dự kiến: ${price}`;
-            window.location.href = `https://zalo.me/0376291926?text=${encodeURIComponent(text)}`;
+            // Xử lý chuyển đổi định dạng chuỗi tiền (ví dụ: "250.000đ" -> 250000) để lưu trữ tính doanh thu chính xác
+            const priceNumber = parseFloat(priceRaw.replace(/[^0-9]/g, '')) || 0;
+
+            // 1. Tạo gói tin Payload gửi lên API Server
+            const bookingPayload = {
+                customerName: pickup, // Lấy điểm đón làm nhận diện tạm thời hoặc bạn có thể tạo ô tên khách riêng
+                phone: phone,
+                route: routeText + ` (${date} ${time})`,
+                carType: carText,
+                price: priceNumber
+            };
+
+            // 2. Thực hiện hàm Fetch API lưu đơn bất đồng bộ
+            fetch('/api/bookings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bookingPayload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log("Hệ thống đã lưu lại lịch sử đơn hàng:", data);
+            })
+            .catch(err => console.error("Lỗi đồng bộ dữ liệu server:", err))
+            .finally(() => {
+                // 3. Cho dù Server lưu đơn thành công hay gặp lỗi nghẽn mạng mạng, vẫn luôn mở link Zalo cho khách hàng
+                const text = `🚕 ĐƠN ĐẶT XE MỚI 🚕\n------------------\n📍 Tuyến: ${routeText}\n🚘 Xe: ${carText}\n🏠 Điểm đón: ${pickup}\n📅 Ngày: ${date} lúc ${time}\n📞 SĐT: ${phone}\n💰 Giá dự kiến: ${priceRaw}`;
+                window.location.href = `https://zalo.me/0376291926?text=${encodeURIComponent(text)}`;
+            });
         });
 
         document.getElementById('date').value = new Date().toISOString().split('T')[0];
