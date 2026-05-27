@@ -119,6 +119,15 @@
                 </table>
             </div>
         </div>
+
+        <div id="page-about" class="tab-content">
+            <h2 class="text-xl font-black mb-2 uppercase italic text-emerald-600">Giới thiệu dịch vụ</h2>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-3 text-sm leading-relaxed text-gray-600">
+                <p>✨ <strong>Taxi Nội Bài Nhanh</strong> tự hào là đơn vị cung cấp dịch vụ vận tải hành khách hàng đầu tuyến Hà Nội ↔ Sân bay Nội Bài và đi các tỉnh thành miền Bắc.</p>
+                <p>💎 Với phương châm <strong>"Đúng hẹn - Trọn gói - An toàn"</strong>, chúng tôi cam kết không phát sinh chi phí ẩn, tài xế lịch sự, xe đời mới sạch sẽ.</p>
+                <p>📞 Tổng đài hỗ trợ 24/7: <a href="tel:0376291926" class="text-emerald-600 font-bold">0376.291.926</a></p>
+            </div>
+        </div>
     </main>
 
     <div class="fixed bottom-4 left-4 right-4 max-w-md mx-auto flex space-x-3 z-50">
@@ -132,7 +141,7 @@
     </div>
 
     <script>
-        let priceMatrix = {}; // Dữ liệu trống ban đầu, sẽ load từ server
+        let priceMatrix = {}; // Dữ liệu trống ban đầu, sẽ load tự động từ server
 
         // Hàm gọi lên Server lấy giá về cho Khách xem
         function loadPrices() {
@@ -142,11 +151,12 @@
                     priceMatrix = data;
                     updatePrice();        // Cập nhật ô tính giá dự kiến
                     renderTablePrice();   // Cập nhật tab "Bảng giá" cho đồng bộ luôn
-                });
+                })
+                .catch(err => console.error("Không thể tải bảng giá từ server:", err));
         }
 
         function updatePrice() {
-            if (!priceMatrix.HN_NB) return; // Đợi load dữ liệu xong
+            if (!priceMatrix.HN_NB) return; // Đợi load dữ liệu xong từ server
             const route = document.getElementById('route').value;
             const car = document.getElementById('carType').value;
             const price = priceMatrix[route][car];
@@ -169,11 +179,15 @@
 
         function renderTablePrice() {
             const tbody = document.getElementById('tablePriceBody');
+            if (!priceMatrix.HN_NB) return;
+            
             tbody.innerHTML = `
                 <tr><td class="py-3 px-2 font-medium">Hà Nội - Nội Bài</td><td class="font-bold text-emerald-600">${priceMatrix.HN_NB["5"]}</td><td class="text-gray-400">Xe 05 chỗ</td></tr>
                 <tr><td class="py-3 px-2 font-medium">Nội Bài - Hà Nội</td><td class="font-bold text-emerald-600">${priceMatrix.NB_HN["5"]}</td><td class="text-gray-400">Xe 05 chỗ</td></tr>
                 <tr><td class="py-3 px-2 font-medium">Hà Nội - Nội Bài</td><td class="font-bold text-emerald-600">${priceMatrix.HN_NB["7"]}</td><td class="text-gray-400">Xe 07 chỗ</td></tr>
                 <tr><td class="py-3 px-2 font-medium">Nội Bài - Hà Nội</td><td class="font-bold text-emerald-600">${priceMatrix.NB_HN["7"]}</td><td class="text-gray-400">Xe 07 chỗ</td></tr>
+                <tr><td class="py-3 px-2 font-medium">Hà Nội - Nội Bài</td><td class="font-bold text-emerald-600">${priceMatrix.HN_NB["16"]}</td><td class="text-gray-400">Xe 16 chỗ</td></tr>
+                <tr><td class="py-3 px-2 font-medium">Nội Bài - Hà Nội</td><td class="font-bold text-emerald-600">${priceMatrix.NB_HN["16"]}</td><td class="text-gray-400">Xe 16 chỗ</td></tr>
             `;
         }
 
@@ -185,7 +199,7 @@
             window.scrollTo(0,0);
         }
 
-        // ĐỒNG BỘ: Gửi đơn âm thầm về Server lưu trữ, sau đó mở ứng dụng Zalo
+        // ĐỒNG BỘ: Gửi đơn âm thầm về Server lưu trữ, sau đó mở ứng dụng Zalo điều hướng khách
         document.getElementById('bookingForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const phone = document.getElementById('phone').value;
@@ -196,19 +210,19 @@
             const date = document.getElementById('date').value;
             const time = document.getElementById('time').value;
 
-            // Xử lý chuyển đổi định dạng chuỗi tiền (ví dụ: "250.000đ" -> 250000) để lưu trữ tính doanh thu chính xác
+            // Xử lý chuyển đổi định dạng chuỗi tiền (ví dụ: "250.000đ" -> 250000) để lưu trữ tính toán doanh thu trên Admin
             const priceNumber = parseFloat(priceRaw.replace(/[^0-9]/g, '')) || 0;
 
             // 1. Tạo gói tin Payload gửi lên API Server
             const bookingPayload = {
-                customerName: pickup, // Lấy điểm đón làm nhận diện tạm thời hoặc bạn có thể tạo ô tên khách riêng
+                customerName: `Khách đón tại: ${pickup}`, // Gán điểm đón vào tên khách để hiển thị rõ tại bảng admin
                 phone: phone,
-                route: routeText + ` (${date} ${time})`,
+                route: `${routeText} (${date} ${time})`,
                 carType: carText,
                 price: priceNumber
             };
 
-            // 2. Thực hiện hàm Fetch API lưu đơn bất đồng bộ
+            // 2. Thực hiện gọi API lưu đơn bất đồng bộ lên server
             fetch('/api/bookings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -216,19 +230,20 @@
             })
             .then(res => res.json())
             .then(data => {
-                console.log("Hệ thống đã lưu lại lịch sử đơn hàng:", data);
+                console.log("Hệ thống đã ghi nhận đơn thành công vào cơ sở dữ liệu admin:", data);
             })
-            .catch(err => console.error("Lỗi đồng bộ dữ liệu server:", err))
+            .catch(err => console.error("Lỗi gửi gói tin API lên hệ thống:", err))
             .finally(() => {
-                // 3. Cho dù Server lưu đơn thành công hay gặp lỗi nghẽn mạng mạng, vẫn luôn mở link Zalo cho khách hàng
+                // 3. Đảm bảo cho dù mạng lỗi hay thành công, ứng dụng vẫn luôn mở Zalo chuyển tin nhắn cho bạn điều hành
                 const text = `🚕 ĐƠN ĐẶT XE MỚI 🚕\n------------------\n📍 Tuyến: ${routeText}\n🚘 Xe: ${carText}\n🏠 Điểm đón: ${pickup}\n📅 Ngày: ${date} lúc ${time}\n📞 SĐT: ${phone}\n💰 Giá dự kiến: ${priceRaw}`;
                 window.location.href = `https://zalo.me/0376291926?text=${encodeURIComponent(text)}`;
             });
         });
 
+        // Tự động điền ngày hiện tại vào ô chọn ngày
         document.getElementById('date').value = new Date().toISOString().split('T')[0];
         
-        // Gọi load dữ liệu khi khách mở trang
+        // Kích hoạt load dữ liệu ngay khi mở trang khách hàng
         window.onload = loadPrices;
     </script>
 </body>
