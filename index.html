@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taxi Nội Bài Nhanh - 0376.291.926</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .active-nav { color: #10b981; border-bottom: 2px solid #10b981; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .zalo-shake { animation: shake 0.5s infinite alternate; }
+        @keyframes shake { 0% { transform: scale(1); } 100% { transform: scale(1.1); } }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-gray-900 pb-24">
+
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-md mx-auto px-4">
+            <div class="flex justify-between items-center py-3">
+                <div class="flex items-center space-x-2">
+                    <div class="bg-amber-500 text-white p-1 rounded font-bold text-xs uppercase italic">Taxi</div>
+                    <span class="font-black text-emerald-600 tracking-tighter">NỘI BÀI NHANH</span>
+                </div>
+                <a href="tel:0376291926" class="bg-emerald-600 text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center">
+                    <i class="fa-solid fa-phone mr-1"></i> 0376.291.926
+                </a>
+            </div>
+            <nav class="flex justify-between text-[10px] font-bold uppercase pb-2 border-t pt-2 text-gray-400">
+                <a href="javascript:void(0)" onclick="showPage('home')" id="nav-home" class="nav-item active-nav py-1">Đặt xe</a>
+                <a href="javascript:void(0)" onclick="showPage('flight')" id="nav-flight" class="nav-item py-1">Vé máy bay</a>
+                <a href="javascript:void(0)" onclick="showPage('price')" id="nav-price" class="nav-item py-1">Bảng giá</a>
+                <a href="javascript:void(0)" onclick="showPage('about')" id="nav-about" class="nav-item py-1">Giới thiệu</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-md mx-auto px-4 py-6">
+        <div id="page-home" class="tab-content active">
+            <div class="text-center mb-6">
+                <h1 class="text-2xl font-black text-emerald-600 uppercase italic">Đặt Taxi Nội Bài</h1>
+                <p class="text-[10px] text-gray-500 font-medium uppercase tracking-widest">Đúng hẹn - Trọn gói - An toàn</p>
+            </div>
+            
+            <form id="bookingForm" class="bg-white p-5 rounded-3xl shadow-xl border border-gray-100 space-y-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Lộ trình của bạn</label>
+                    <select id="route" onchange="updatePrice()" class="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 px-4 text-sm font-semibold outline-none focus:border-emerald-500">
+                        <option value="HN_NB">Hà Nội → Nội Bài (Tiễn)</option>
+                        <option value="NB_HN">Nội Bài → Hà Nội (Đón)</option>
+                        <option value="PROVINCE">Đi tỉnh / Đường dài</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Chọn loại xe</label>
+                    <select id="carType" onchange="updatePrice()" class="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 px-4 text-sm font-bold outline-none focus:border-emerald-500">
+                        <option value="5">Xe 05 chỗ (Gồm lái xe)</option>
+                        <option value="7">Xe 07 chỗ (Gồm lái xe)</option>
+                        <option value="16">Xe 16 chỗ (Gồm lái xe)</option>
+                        <option value="29">Xe 29 chỗ (Gồm lái xe)</option>
+                        <option value="45">Xe 45 chỗ (Gồm lái xe)</option>
+                    </select>
+                </div>
+
+                <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 relative overflow-hidden">
+                    <div class="flex justify-between items-center relative z-10">
+                        <span class="text-[10px] font-black text-emerald-800 uppercase">Giá trọn gói dự kiến:</span>
+                        <span id="displayPrice" class="text-2xl font-black text-emerald-600 tracking-tighter">Đang tải...</span>
+                    </div>
+                    <p id="priceNote" class="text-[9px] text-emerald-700 mt-1 italic hidden"></p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="tel" id="phone" required placeholder="Số điện thoại" class="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 px-4 text-sm outline-none focus:border-emerald-500">
+                    <input type="text" id="pickup" required placeholder="Điểm đón khách" class="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 px-4 text-sm outline-none focus:border-emerald-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="date" id="date" class="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 px-4 text-xs outline-none">
+                    <input type="time" id="time" class="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 px-4 text-xs outline-none">
+                </div>
+
+                <button type="submit" class="w-full bg-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-200 uppercase tracking-widest flex items-center justify-center space-x-2 active:scale-95 transition-transform">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>ĐẶT XE QUA ZALO</span>
+                </button>
+            </form>
+        </div>
+
+        <div id="page-flight" class="tab-content">
+            <h2 class="text-xl font-black mb-1 uppercase italic text-emerald-600">Đặt vé máy bay</h2>
+            <p class="text-[10px] text-gray-500 mb-6 font-bold uppercase">Liên kết trực tiếp tới các hãng</p>
+            <div class="space-y-3">
+                <a href="https://www.vietnamairlines.com/" target="_blank" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between group">
+                    <span class="font-bold text-sm text-gray-700 group-hover:text-emerald-600">Vietnam Airlines</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-gray-300 group-hover:text-emerald-500"></i>
+                </a>
+                <a href="https://www.vietjetair.com/" target="_blank" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between group">
+                    <span class="font-bold text-sm text-gray-700 group-hover:text-emerald-600">Vietjet Air</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-gray-300 group-hover:text-emerald-500"></i>
+                </a>
+            </div>
+        </div>
+
+        <div id="page-price" class="tab-content">
+            <h2 class="text-xl font-black mb-4 uppercase italic text-emerald-600">Bảng giá niêm yết</h2>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <table class="w-full text-[11px] text-center">
+                    <thead>
+                        <tr class="bg-gray-800 text-white uppercase">
+                            <th class="py-3 px-2">Tên dịch vụ</th>
+                            <th class="py-3 px-2">Đơn giá</th>
+                            <th class="py-3 px-2">Ghi chú</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100" id="tablePriceBody">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div class="fixed bottom-4 left-4 right-4 max-w-md mx-auto flex space-x-3 z-50">
+        <a href="https://zalo.me/0376291926" target="_blank" class="zalo-shake bg-blue-600 text-white flex-1 py-3 rounded-2xl shadow-xl flex items-center justify-center space-x-2 font-bold">
+            <i class="fa-solid fa-comment-dots text-xl"></i>
+            <span>ZALO NHẬN BÁO GIÁ</span>
+        </a>
+        <a href="tel:0376291926" class="bg-emerald-600 text-white w-14 h-14 rounded-2xl shadow-xl flex items-center justify-center">
+            <i class="fa-solid fa-phone-volume text-xl"></i>
+        </a>
+    </div>
+
+    <script>
+        let priceMatrix = {}; // Dữ liệu trống ban đầu, sẽ load từ server
+
+        // Hàm gọi lên Server lấy giá về cho Khách xem
+        function loadPrices() {
+            fetch('/api/prices')
+                .then(res => res.json())
+                .then(data => {
+                    priceMatrix = data;
+                    updatePrice();        // Cập nhật ô tính giá dự kiến
+                    renderTablePrice();   // Cập nhật tab "Bảng giá" cho đồng bộ luôn
+                });
+        }
+
+        function updatePrice() {
+            if (!priceMatrix.HN_NB) return; // Đợi load dữ liệu xong
+            const route = document.getElementById('route').value;
+            const car = document.getElementById('carType').value;
+            const price = priceMatrix[route][car];
+            
+            const display = document.getElementById('displayPrice');
+            const note = document.getElementById('priceNote');
+
+            display.innerText = price;
+
+            if (car === "29" || car === "45") {
+                note.innerText = "* Xe lớn giá thay đổi theo thời gian cao điểm & vị trí đón.";
+                note.classList.remove('hidden');
+            } else if (route === "PROVINCE") {
+                note.innerText = "* Vui lòng nhắn Zalo để nhận báo giá đường dài tốt nhất.";
+                note.classList.remove('hidden');
+            } else {
+                note.classList.add('hidden');
+            }
+        }
+
+        function renderTablePrice() {
+            const tbody = document.getElementById('tablePriceBody');
+            tbody.innerHTML = `
+                <tr><td class="py-3 px-2 font-medium">Hà Nội - Nội Bài</td><td class="font-bold text-emerald-600">${priceMatrix.HN_NB["5"]}</td><td class="text-gray-400">Xe 05 chỗ</td></tr>
+                <tr><td class="py-3 px-2 font-medium">Nội Bài - Hà Nội</td><td class="font-bold text-emerald-600">${priceMatrix.NB_HN["5"]}</td><td class="text-gray-400">Xe 05 chỗ</td></tr>
+                <tr><td class="py-3 px-2 font-medium">Hà Nội - Nội Bài</td><td class="font-bold text-emerald-600">${priceMatrix.HN_NB["7"]}</td><td class="text-gray-400">Xe 07 chỗ</td></tr>
+                <tr><td class="py-3 px-2 font-medium">Nội Bài - Hà Nội</td><td class="font-bold text-emerald-600">${priceMatrix.NB_HN["7"]}</td><td class="text-gray-400">Xe 07 chỗ</td></tr>
+            `;
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.tab-content').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-nav'));
+            document.getElementById('page-' + pageId).classList.add('active');
+            document.getElementById('nav-' + pageId).classList.add('active-nav');
+            window.scrollTo(0,0);
+        }
+
+        document.getElementById('bookingForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const phone = document.getElementById('phone').value;
+            const pickup = document.getElementById('pickup').value;
+            const routeText = document.getElementById('route').options[document.getElementById('route').selectedIndex].text;
+            const carText = document.getElementById('carType').options[document.getElementById('carType').selectedIndex].text;
+            const price = document.getElementById('displayPrice').innerText;
+            const date = document.getElementById('date').value;
+            const time = document.getElementById('time').value;
+
+            const text = `🚕 ĐƠN ĐẶT XE MỚI 🚕\n------------------\n📍 Tuyến: ${routeText}\n🚘 Xe: ${carText}\n🏠 Điểm đón: ${pickup}\n📅 Ngày: ${date} lúc ${time}\n📞 SĐT: ${phone}\n💰 Giá dự kiến: ${price}`;
+            window.location.href = `https://zalo.me/0376291926?text=${encodeURIComponent(text)}`;
+        });
+
+        document.getElementById('date').value = new Date().toISOString().split('T')[0];
+        
+        // Gọi load dữ liệu khi khách mở trang
+        window.onload = loadPrices;
+    </script>
+</body>
+</html>

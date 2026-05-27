@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Quản trị - Taxi Nội Bài Nhanh</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 font-sans text-gray-900">
+    <div id="adminContent" class="hidden">
+        </div>
+
+    <script>
+        // Hàm kiểm tra mật khẩu ngay khi vừa tải trang admin
+        function checkAdminPassword() {
+            const password = prompt("Vui lòng nhập mật khẩu quản trị viên để truy cập:");
+            
+            // Bạn có thể đổi 'fpt2026' thành mật khẩu bất kỳ bạn muốn
+            if (password === 'fpt2026') {
+                // Nếu đúng mật khẩu, hiện giao diện lên và load giá từ server
+                document.getElementById('adminContent').classList.remove('hidden');
+                loadPricesToAdmin();
+            } else {
+                alert("Sai mật khẩu! Bạn không có quyền truy cập trang này.");
+                window.location.href = '/index.html'; // Đuổi ra trang chủ của khách
+            }
+        }
+
+        // Thay vì dùng window.onload = loadPricesToAdmin; cũ, bạn đổi thành:
+        window.onload = checkAdminPassword;
+    </script>
+
+    <nav class="bg-emerald-600 text-white p-4 shadow-md">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-2 font-bold">
+                <i class="fa-solid fa-user-gear text-xl"></i>
+                <span>TAXI ADMIN DASHBOARD</span>
+            </div>
+            <span class="text-xs bg-emerald-700 px-3 py-1 rounded-full text-emerald-100">Chế độ: Đang chạy Server</span>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+            <div class="flex items-center space-x-2 mb-4 border-b pb-2">
+                <i class="fa-solid fa-money-bill-wave text-emerald-600 text-lg"></i>
+                <h2 class="text-lg font-black text-gray-800 uppercase">Cấu hình ma trận giá dịch vụ</h2>
+            </div>
+
+            <form id="updatePriceForm" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end bg-gray-50 p-4 rounded-xl mb-6">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">1. Lộ trình</label>
+                    <select id="adminRoute" class="w-full bg-white border border-gray-200 rounded-xl p-2.5 text-sm font-semibold outline-none focus:border-emerald-500">
+                        <option value="HN_NB">Hà Nội → Nội Bài (Tiễn)</option>
+                        <option value="NB_HN">Nội Bài → Hà Nội (Đón)</option>
+                        <option value="PROVINCE">Đi tỉnh / Đường dài</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">2. Loại xe</label>
+                    <select id="adminCarType" class="w-full bg-white border border-gray-200 rounded-xl p-2.5 text-sm font-bold outline-none focus:border-emerald-500">
+                        <option value="5">Xe 05 chỗ</option>
+                        <option value="7">Xe 07 chỗ</option>
+                        <option value="16">Xe 16 chỗ</option>
+                        <option value="29">Xe 29 chỗ</option>
+                        <option value="45">Xe 45 chỗ</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">3. Giá mới (đ)</label>
+                    <input type="text" id="adminPrice" required placeholder="Ví dụ: 260.000đ" class="w-full bg-white border border-gray-200 rounded-xl p-2.5 text-sm font-bold outline-none focus:border-emerald-500">
+                </div>
+                <button type="submit" class="bg-emerald-600 text-white font-bold py-2.5 px-4 rounded-xl shadow-md hover:bg-emerald-700 text-sm uppercase">
+                    <i class="fa-solid fa-floppy-disk mr-1"></i> Cập nhật giá
+                </button>
+            </form>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-600">
+                    <thead class="text-xs uppercase bg-gray-100 text-gray-700 font-bold">
+                        <tr>
+                            <th class="py-3 px-4">Lộ trình</th>
+                            <th class="py-3 px-4 text-center">Xe 5 chỗ</th>
+                            <th class="py-3 px-4 text-center">Xe 7 chỗ</th>
+                            <th class="py-3 px-4 text-center">Xe 16 chỗ</th>
+                            <th class="py-3 px-4 text-center">Xe 29 chỗ</th>
+                            <th class="py-3 px-4 text-center">Xe 45 chỗ</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100" id="adminPriceTableBody">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let localPriceMatrix = {};
+
+        // Hàm gọi API lấy giá từ Server về để hiển thị lên bảng điều khiển Admin
+        function loadPricesToAdmin() {
+            fetch('/api/prices')
+                .then(res => res.json())
+                .then(data => {
+                    localPriceMatrix = data;
+                    renderAdminTable();
+                });
+        }
+
+        function renderAdminTable() {
+            if(!localPriceMatrix.HN_NB) return;
+            const tbody = document.getElementById('adminPriceTableBody');
+            tbody.innerHTML = `
+                <tr class="hover:bg-gray-50">
+                    <td class="py-3 px-4 font-semibold text-gray-800">Hà Nội → Nội Bài</td>
+                    <td class="py-3 px-4 text-center font-bold text-emerald-600">${localPriceMatrix.HN_NB["5"]}</td>
+                    <td class="py-3 px-4 text-center font-bold text-emerald-600">${localPriceMatrix.HN_NB["7"]}</td>
+                    <td class="py-3 px-4 text-center font-bold text-emerald-600">${localPriceMatrix.HN_NB["16"]}</td>
+                    <td class="py-3 px-4 text-center font-bold text-emerald-600">${localPriceMatrix.HN_NB["29"]}</td>
+                    <td class="py-3 px-4 text-center font-bold text-emerald-600">${localPriceMatrix.HN_NB["45"]}</td>
+                </tr>
+                <tr class="hover:bg-gray-50">
+                    <td class="py-3 px-4 font-semibold text-gray-800">Nội Bài → Hà Nội</td>
+                    <td class="py-3 px-4 text-center font-bold text-emerald-600">${localPriceMatrix.NB_HN["5"]}</td>
+                    <td class="py-3 px-4 text-center font-bold text-emerald-600">${localPriceMatrix.NB_HN["7"]}</td>
+                    <td class="py-3 px-4 text-center font-bold text-emerald-600">${localPriceMatrix.NB_HN["16"]}</td>
+                    <td class="py-3 px-4 text-center font-bold text-emerald-600">${localPriceMatrix.NB_HN["29"]}</td>
+                    <td class="py-3 px-4 text-center font-bold text-emerald-600">${localPriceMatrix.NB_HN["45"]}</td>
+                </tr>
+                <tr class="hover:bg-gray-50">
+                    <td class="py-3 px-4 font-semibold text-gray-800">Đi tỉnh / Đường dài</td>
+                    <td class="py-3 px-4 text-center font-bold text-emerald-600">${localPriceMatrix.PROVINCE["5"]}</td>
+                    <td class="py-3 px-4 text-center font-bold text-emerald-600">${localPriceMatrix.PROVINCE["7"]}</td>
+                    <td class="py-3 px-4 text-center font-bold text-emerald-600">${localPriceMatrix.PROVINCE["16"]}</td>
+                    <td class="py-3 px-4 text-center font-bold text-emerald-600">${localPriceMatrix.PROVINCE["29"]}</td>
+                    <td class="py-3 px-4 text-center font-bold text-emerald-600">${localPriceMatrix.PROVINCE["45"]}</td>
+                </tr>
+            `;
+        }
+
+        // Đẩy giá mới lên server khi bấm nút Cập nhật giá
+        document.getElementById('updatePriceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const route = document.getElementById('adminRoute').value;
+            const carType = document.getElementById('adminCarType').value;
+            const newPrice = document.getElementById('adminPrice').value;
+
+            fetch('/api/update-price', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ route, carType, newPrice })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    alert("Cập nhật thành công lên hệ thống!");
+                    loadPricesToAdmin(); // Tải lại bảng sau khi cập nhật thành công
+                    document.getElementById('adminPrice').value = '';
+                }
+            });
+        });
+
+        window.onload = loadPricesToAdmin;
+    </script>
+</body>
+</html>
